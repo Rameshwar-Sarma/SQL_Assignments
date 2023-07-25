@@ -1,0 +1,99 @@
+Assignment - 1
+
+1. Write a script to extracts all the numerics from Alphanumeric String
+
+Option 1:
+	declare @str as varchar(max), @len as int, @i as int, @ans as bigint, @s as char(1);
+	set @str = '1qazxcvf6tfg6yu8iko09ol8832@^@%!^^*&!hff2'
+	set @len = len(@str);
+	set @i=1;
+	set @ans =0;
+	WHILE (@i <= @len)
+		begin
+		set @s = substring(@str,@i,@i);
+		if try_parse(@s as int) is not null set @ans = @ans*10 + parse(@s as int);
+		set @i = @i + 1;
+		end;
+	SELECT @ans;
+
+2. Write a script to calculate age based on the Input DOB
+
+Option 1:
+	declare @DOB AS DATE;
+	set @DOB = '11/09/2001';
+	SELECT (0 + convert(char(8),getdate(),112) - convert(char(8),@dob,112)) / 10000;
+
+Option 2:
+	DECLARE @DOB AS DATE;
+	set @DOB = '11/09/2001';
+ 	SELECT 	CASE 
+        	WHEN MONTH(GETDATE()) > MONTH(@DOB) OR MONTH(GETDATE()) = MONTH(@dob) AND DAY(GETDATE()) >= DAY(@dob) THEN DATEDIFF(year, @dob, GETDATE()) 
+        	ELSE DATEDIFF(year, @dob, GETDATE()) - 1 
+    	END AS age;
+
+
+3. Create a column in a table and that should throw an error when we do SELECT * or SELECT of that column. If we select other columns then we should see results.
+
+Option 1:
+	CREATE TABLE error (id int, false as id/0);
+	insert into error(id)values(1),(2),(3);
+
+	select * from error;
+	select false from error;
+
+	select id from error;
+
+--4. Display Calendar Table based on the input year. If I give the year 2017 then populate data for 2017 only
+--Date e.g.  1/1/2017
+--DayofYear 1 – 365/366 (Note 1)
+--Week 1-52/53
+--DayofWeek 1-7
+--Month 1-12
+
+Option 1:
+	CREATE TABLE Calender(Date date,
+				DayofYear as datepart(dayofyear,Date),
+	   			Week as datepart(week,Date),
+				DayofWeek as datepart(weekday,Date),
+				month as datepart(month,Date),
+				DayofMonth as datepart(day,Date)
+				);
+
+	declare @year INT;
+	set @year = 2001;
+	declare @date as date;
+	set @date = '01/01/'+convert(char(4),@year);
+	truncate table calender;
+	while(datepart(year,@date) = @year)
+	begin
+		insert into Calender(Date) values(@date)
+		set @date = dateadd(day,1,@date)
+	end;
+	SELECT * 
+	FROM Calender; 
+
+5.Display Emp and Manager Hierarchies based on the input till the topmost hierarchy. (Input would be empid)
+ Output: Empid, empname, managername, heirarchylevel
+
+Option 1:
+	CREATE TABLE employee(empid int, empname varchar(20), managerId int);
+	insert into employee values(1,'Pradeep',null),(2,'Sudhir',1),(3,'Sumith',2),(4,'Rakesh',3),(5,'Amisha',3),(6,'Rameshwar',3);
+
+	WITH cte (Eid,empname, mId,emplevel)
+	AS 
+	(SELECT empid, empname,managerId,1
+		FROM employee
+		WHERE managerId  is null
+  	UNION ALL
+  	 SELECT e.empid,e.empname,e.managerId,r.emplevel+1 as emplevel
+		  FROM employee e
+		  INNER JOIN cte r
+		  ON r.Eid = e.managerId
+ 	)
+  	SELECT Eid,empname,
+  	(SELECT empname  
+	 FROM Employee
+    	 WHERE empid = cte.mId
+	) AS ManagerName,EmpLevel as Heirarchichal_Level
+	FROM cte 
+	ORDER BY EmpLevel,mId;
